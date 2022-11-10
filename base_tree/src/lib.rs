@@ -1,7 +1,4 @@
-use std::{
-    marker::PhantomData,
-    ptr::{self, NonNull},
-};
+use std::ptr::{self, NonNull};
 
 pub struct Node<T> {
     data: T,
@@ -55,7 +52,7 @@ impl<T> Node<T> {
             ptr
         });
 
-        // Set parent
+        // Miri does not like this for some reason
         let new_child = new_child.map(|nc| {
             nc.parent = Some(parent);
             nc
@@ -74,33 +71,31 @@ impl<T> Node<T> {
         &mut self.data
     }
 
-    pub fn left<'a>(&'a self) -> Option<&'a Self> {
+    pub fn left(&self) -> Option<&Self> {
         self.left.map(|ptr| unsafe { ptr.as_ref() })
     }
 
-    pub fn right<'a>(&'a self) -> Option<&'a Self> {
+    pub fn right(&self) -> Option<&Self> {
         self.right.map(|ptr| unsafe { ptr.as_ref() })
     }
 
-    pub fn parent<'a>(&'a self) -> Option<&'a Self> {
+    pub fn parent(&self) -> Option<&Self> {
         self.parent.map(|ptr| unsafe { ptr.as_ref() })
     }
 
-    pub fn left_mut<'a>(&'a mut self) -> Option<&'a mut Self> {
+    pub fn left_mut(&mut self) -> Option<&mut Self> {
         self.left.map(|mut ptr| unsafe { ptr.as_mut() })
     }
 
-    pub fn right_mut<'a>(&'a mut self) -> Option<&'a mut Self> {
+    pub fn right_mut(&mut self) -> Option<&mut Self> {
         self.right.map(|mut ptr| unsafe { ptr.as_mut() })
     }
 
-    pub fn parent_mut<'a>(&'a mut self) -> Option<&'a mut Self> {
+    pub fn parent_mut(&mut self) -> Option<&mut Self> {
         self.parent.map(|mut ptr| unsafe { ptr.as_mut() })
     }
 
-    pub fn split_mut<'a>(
-        &'a mut self,
-    ) -> (Option<&'a mut Self>, &'a mut Self, Option<&'a mut Self>) {
+    pub fn split_mut(&mut self) -> (Option<&mut Self>, &mut Self, Option<&mut Self>) {
         // Safety: We previously had exclusive access to the whole tree, now we remove all
         // references between self and its children, giving exclusive access to each of the
         // subtrees.
