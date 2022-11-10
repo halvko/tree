@@ -1,4 +1,7 @@
-use std::ptr::{self, NonNull};
+use std::{
+    marker::PhantomData,
+    ptr::{self, NonNull},
+};
 
 pub struct Node<T> {
     data: T,
@@ -54,7 +57,7 @@ impl<T> Node<T> {
 
         // Set parent
         let new_child = new_child.map(|nc| {
-            nc.parent = Some(parent.into());
+            nc.parent = Some(parent);
             nc
         });
 
@@ -119,7 +122,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn creation() {
+    fn walk_around() {
         let node0 = &mut Node::new(String::from("0"));
         let node1 = &mut Node::new(String::from("1"));
         let node2 = &mut Node::new(String::from("2"));
@@ -136,7 +139,25 @@ mod tests {
         node2.replace_left(Some(node0));
         node2.replace_right(Some(node3));
 
-        let node0 = node2.left_mut();
-        assert_eq!(node0.map(|n| &n.data), Some(&String::from("0")));
+        let Some(node0) = node2.left_mut() else {
+            panic!("Expected node 0 to be present")
+        };
+        assert_eq!(node0.get(), "0");
+        *node0.get_mut() = "10".into();
+        let None = node0.left() else {
+            panic!("Expected nothing to the left of node 0")
+        };
+        let Some(node1) = node0.right_mut() else {
+            panic!("Expected node 1 to be present")
+        };
+        assert_eq!(node1.get(), "1");
+        let Some(node10) = node1.parent_mut() else {
+            panic!("Expected node 1 to have a parent")
+        };
+        assert_eq!(node10.get(), "10");
+        let Some(n4) = node10.parent_mut().and_then(Node::right_mut).and_then(Node::right_mut) else {
+            panic!("Expected to be able to walk to node 4")
+        };
+        assert_eq!(n4.get(), "4");
     }
 }
